@@ -46,9 +46,7 @@ public class HelloController {
 
     private void loadGame()
     {
-        // Load
         GameState loadedGameState = FileUtils.loadGame();
-
         // Check if is not null
         if (loadedGameState != null) {
             // Update the controller's current game state with the loaded state
@@ -57,14 +55,14 @@ public class HelloController {
             // Update the UI to reflect the loaded game state
             updateUI();
 
-            updatePlayerLabel();
+            GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
         } else {
             DialogUtils.showErrorDialog("Error", "Load", "Cannot load saved game");
         }
     }
 
     private Node getNodeFromGridPane(int row, int col) {
-        // Assumes gameGrid is a GridPane: this method retrieves the node at the specified row and column
+        // retrieves the node at the specified row and column
         for (Node node : gameGrid.getChildren()) {
             if (GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col) {
                 return node;
@@ -113,29 +111,13 @@ public class HelloController {
                 (j - 4 >= 0 && gameState.getGameBoard()[i][j - 2] == opponentState && gameState.getGameBoard()[i][j - 4] == currentPlayerState && gameState.getGameBoard()[i][j - 1] != CellState.WALL && gameState.getGameBoard()[i][j - 3] != CellState.WALL));
     }
 
-
-    private void updatePlayerLabel() {
-        if (gameState.getCurrPlayer().equals("Player2")) {
-            playerLabel.setText("Player 2");
-            playerLabel.setTextFill(Color.ROYALBLUE);
-        }
-        else { // Default
-            playerLabel.setText("Player 1");
-            playerLabel.setTextFill(Color.TOMATO);
-        }
-
-        player1Walls.setText(String.valueOf(gameState.getPlayer1WallsLeft()));
-        player2Walls.setText(String.valueOf(gameState.getPlayer2WallsLeft()));
-    }
-
-
-
     private boolean checkValidity(int row, int col, String orient) {
         // First, determine the current player and their remaining walls.
         int wallsLeft;
         if (gameState.getCurrPlayer().equals("Player1")) {
             wallsLeft = gameState.getPlayer1WallsLeft();
-        } else { // Assuming "Player2"
+        }
+        else {
             wallsLeft = gameState.getPlayer2WallsLeft();
         }
 
@@ -154,7 +136,8 @@ public class HelloController {
         for (int i = 0; i < 2; i++) {
             if (orient.equals("row")) {
                 if (gameBoard[row][col + i] != CellState.EMPTY) return false;
-            } else if (orient.equals("col")) {
+            }
+            else if (orient.equals("col")) {
                 if (gameBoard[row + i][col] != CellState.EMPTY) return false;
             }
         }
@@ -188,7 +171,8 @@ public class HelloController {
                     } else {
                         button.setGraphic(null); // Clear the graphic for EMPTY or WALL
                     }
-                } else if (node instanceof Pane) {
+                }
+                else if (node instanceof Pane) {
                     // Visually represent walls
                     Pane pane = (Pane) node;
                     CellState state = gameState.getGameBoard()[i][j];
@@ -196,13 +180,12 @@ public class HelloController {
                         pane.setStyle("-fx-background-color: orange; -fx-border-color: orange;");
                     } else {
                         // Reset the style for empty cells or other purposes
-                        pane.setStyle("-fx-background-color: white; -fx-border-color: black;");
+                        pane.setStyle("-fx-background-color: white; -fx-border-color: white;");
                     }
                 }
             }
         }
-        // Ensure player labels and wall counts are updated to reflect the current game state
-        updatePlayerLabel();
+        GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
     }
 
     private String determineOrientation(int i, int j) {
@@ -224,7 +207,7 @@ public class HelloController {
 
         gameState.toggleCurrentPlayer();
 
-        updatePlayerLabel();
+        GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
     }
 
     private MenuBar loadMenuBar() {
@@ -261,7 +244,7 @@ public class HelloController {
         borderPane.setCenter(gameGrid);
         gameGrid.getChildren().clear();
 
-        updatePlayerLabel();
+        GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
 
         File f1 = new File("src/images/player1.png");
         File f2 = new File("src/images/player2.png");
@@ -274,14 +257,14 @@ public class HelloController {
 
         for (int i = 0; i< NUM_OF_ROWS ; i++){
             for (int j = 0; j< NUM_OF_COLS; j++ ){
-                if (i%2 ==0 && j%2==0){
+                if (i % 2 == 0 && j % 2 == 0){
                     Button btn = new Button();
                     btn.setMaxWidth(100);
                     btn.setMaxHeight(100);
                     int finalI = i;
                     int finalJ = j;
                     btn.setWrapText(true);
-                    btn.setOnMouseClicked(e->{
+                    btn.setOnMouseClicked(e -> {
                         // Check if the move is valid based on the gameState
                         if (isAbleToMove(finalI, finalJ)) {
                             // Update the gameState with the new player position
@@ -290,9 +273,8 @@ public class HelloController {
                             updateUI();
                             // Toggle the current player in gameState
                             gameState.toggleCurrentPlayer();
-                            updatePlayerLabel();
+                            GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
                         }
-                        //checkWinner();
                         GameUtils.checkWinner(gameState.getGameBoard(), NUM_OF_ROWS, gameGrid);
                     });
                     gameGrid.add(btn, j, i);
@@ -302,7 +284,7 @@ public class HelloController {
                 else {
                     Pane pane = new Pane();
                     gameGrid.add(pane, i, j);
-                    pane.setStyle("-fx-background-color: white; -fx-border-color: black;");
+                    pane.setStyle("-fx-background-color: white; -fx-border-color: white;");
                     int finalI = i;
                     int finalJ = j;
 

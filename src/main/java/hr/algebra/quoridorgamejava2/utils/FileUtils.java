@@ -23,12 +23,16 @@ public class FileUtils {
     public static GameState loadGame() {
         GameState gameState = null;
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+        try (ObjectInputStream ois = new ObjectInputStream(
+                new FileInputStream(filePath))) {
             gameState = (GameState) ois.readObject();
 
-            DialogUtils.showInformationDialog("Information Dialog", "Game Loaded", "Game Data has been loaded.");
+            DialogUtils.showInformationDialog("Information Dialog",
+                    "Game Loaded", "Game Data has been loaded.");
+
         } catch (IOException | ClassNotFoundException e) {
-            DialogUtils.showErrorDialog("Error Dialog", "Load Error", "Error loading game data: "  + e.getMessage());
+            DialogUtils.showErrorDialog("Error Dialog",
+                    "Load Error", "Error loading game data: "  + e.getMessage());
         }
 
         return gameState;

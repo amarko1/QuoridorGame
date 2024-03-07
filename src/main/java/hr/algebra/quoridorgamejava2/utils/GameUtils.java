@@ -1,8 +1,11 @@
 package hr.algebra.quoridorgamejava2.utils;
 
 import hr.algebra.quoridorgamejava2.model.CellState;
+import hr.algebra.quoridorgamejava2.model.GameState;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
 
 public class GameUtils {
     public static void checkWinner(CellState[][] gameBoard, int numRows, GridPane gameGrid) {
@@ -31,6 +34,20 @@ public class GameUtils {
         for (Node node : gameGrid.getChildren()) {
             node.setDisable(true);
         }
+    }
+
+    public static void updatePlayerLabel(GameState gameState, Label playerLabel, Label player1Walls, Label player2Walls ) {
+        if (gameState.getCurrPlayer().equals("Player2")) {
+            playerLabel.setText("Player 2");
+            playerLabel.setTextFill(Color.ROYALBLUE);
+        }
+        else { // Default
+            playerLabel.setText("Player 1");
+            playerLabel.setTextFill(Color.TOMATO);
+        }
+
+        player1Walls.setText(String.valueOf(gameState.getPlayer1WallsLeft()));
+        player2Walls.setText(String.valueOf(gameState.getPlayer2WallsLeft()));
     }
 }
 

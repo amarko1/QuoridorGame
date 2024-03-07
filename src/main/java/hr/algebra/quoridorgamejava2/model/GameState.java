@@ -1,5 +1,7 @@
 package hr.algebra.quoridorgamejava2.model;
 
+import hr.algebra.quoridorgamejava2.utils.DialogUtils;
+
 import java.io.Serializable;
 
 public class GameState implements Serializable {
@@ -70,7 +72,7 @@ public class GameState implements Serializable {
     }
 
     public void movePlayer(int newRow, int newCol) {
-        // Find the current player's position (this might require storing player positions in GameState if not already)
+        // Find the current player's position
         for (int i = 0; i < NUM_OF_ROWS; i++) {
             for (int j = 0; j < NUM_OF_ROWS; j++) {
                 if ((currPlayer.equals("Player1") && gameBoard[i][j] == CellState.PLAYER1) ||
@@ -80,7 +82,6 @@ public class GameState implements Serializable {
                 }
             }
         }
-
         // Set the new position based on the current player
         gameBoard[newRow][newCol] = currPlayer.equals("Player1") ? CellState.PLAYER1 : CellState.PLAYER2;
     }
@@ -88,7 +89,8 @@ public class GameState implements Serializable {
     public void placeWall(int row, int col, String orientation) {
         if (this.gameBoard == null) {
             System.out.println("GameState gameBoard is null!");
-            return; // Early exit if gameBoard hasn't been initialized
+            DialogUtils.showErrorDialog("Error", "Game state error", "GameState gameBoard is null!");
+            return; // exit if gameBoard hasn't been initialized
         }
         // Logic to place a wall in the gameBoard
         if ("row".equals(orientation)) {
