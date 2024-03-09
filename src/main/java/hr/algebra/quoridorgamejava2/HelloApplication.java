@@ -53,7 +53,7 @@ public class HelloApplication extends Application {
         if (loggedInRoleName == RoleName.SERVER) {
             startChatService();
             acceptRequestsAsServer();
-        } else {
+        } else if (loggedInRoleName == RoleName.CLIENT) {
             startChatClient();
             acceptRequestsAsClient();
         }

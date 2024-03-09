@@ -23,8 +23,7 @@ public class GetLastGameMoveThread extends GameMoveThread implements Runnable {
 
             if(lastGameMoveOptional.isPresent()) {
                 Platform.runLater(() -> {
-                    lastGameMoveLabel.setText("The last game move: \n"
-                            + lastGameMoveOptional.get().getPosition() + " \n"
+                    lastGameMoveLabel.setText(lastGameMoveOptional.get().getPosition() + " \n"
                             + lastGameMoveOptional.get().getLocalDateTime());
                 });
             }

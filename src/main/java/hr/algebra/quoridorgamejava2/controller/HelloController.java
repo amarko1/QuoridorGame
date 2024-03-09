@@ -287,7 +287,7 @@ public class HelloController {
         if (HelloApplication.loggedInRoleName == RoleName.CLIENT) {
             NetworkingUtils.sendGameStateToServer(gameState);
             GameUtils.disableBoard(gameGrid);
-        } else {
+        } else if (HelloApplication.loggedInRoleName == RoleName.SERVER) {
             NetworkingUtils.sendGameStateToClient(gameState);
             GameUtils.disableBoard(gameGrid);
         }
@@ -311,27 +311,30 @@ public class HelloController {
 
         borderPane.setTop(menu);
 
-        final Timeline timeline = new Timeline(
-                new KeyFrame(
-                        Duration.millis(1000),
-                        event -> {
-                            List<String> chatMessages = null;
-                            try {
-                                chatMessages = HelloApplication.chatRemoteService.getAllChatMessages();
-                            } catch (RemoteException e) {
-                                throw new RuntimeException(e);
-                            }
+        if (HelloApplication.loggedInRoleName != RoleName.SINGLE_PLAYER) {
 
-                            chatTextArea.clear();
+            final Timeline timeline = new Timeline(
+                    new KeyFrame(
+                            Duration.millis(1000),
+                            event -> {
+                                List<String> chatMessages = null;
+                                try {
+                                    chatMessages = HelloApplication.chatRemoteService.getAllChatMessages();
+                                } catch (RemoteException e) {
+                                    throw new RuntimeException(e);
+                                }
 
-                            for (String message : chatMessages) {
-                                chatTextArea.appendText(message + "\n");
+                                chatTextArea.clear();
+
+                                for (String message : chatMessages) {
+                                    chatTextArea.appendText(message + "\n");
+                                }
                             }
-                        }
-                )
-        );
-        timeline.setCycleCount(Animation.INDEFINITE);
-        timeline.play();
+                    )
+            );
+            timeline.setCycleCount(Animation.INDEFINITE);
+            timeline.play();
+        }
 
         GetLastGameMoveThread getLastGameMoveThread = new GetLastGameMoveThread(lastGameMoveTextArea);
         Thread starterThread = new Thread(getLastGameMoveThread);
