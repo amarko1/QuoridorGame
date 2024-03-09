@@ -1,5 +1,7 @@
 package hr.algebra.quoridorgamejava2.utils;
 
+import hr.algebra.quoridorgamejava2.model.ConfigurationKey;
+import hr.algebra.quoridorgamejava2.model.ConfigurationReader;
 import hr.algebra.quoridorgamejava2.model.GameState;
 import hr.algebra.quoridorgamejava2.model.NetworkConfiguration;
 
@@ -10,7 +12,9 @@ import java.net.Socket;
 
 public class NetworkingUtils {
     public static void sendGameStateToServer(GameState gameState) {
-        try (Socket clientSocket = new Socket(NetworkConfiguration.HOST, NetworkConfiguration.SERVER_PORT)){
+        try (Socket clientSocket = new Socket(ConfigurationReader.getStringValueForKey(ConfigurationKey.HOST),
+                ConfigurationReader.getIntegerValueForKey(ConfigurationKey.SERVER_PORT)))
+        {
             System.err.println("Client is connecting to " + clientSocket.getInetAddress() + ":" +clientSocket.getPort());
             sendSerializableRequest(clientSocket, gameState);
         } catch (IOException | ClassNotFoundException e) {
@@ -19,7 +23,10 @@ public class NetworkingUtils {
     }
 
     public static void sendGameStateToClient(GameState gameState) {
-        try (Socket clientSocket = new Socket(NetworkConfiguration.HOST, NetworkConfiguration.CLIENT_PORT)){
+        try (Socket clientSocket = new Socket(
+                ConfigurationReader.getStringValueForKey(ConfigurationKey.HOST),
+                ConfigurationReader.getIntegerValueForKey(ConfigurationKey.CLIENT_PORT)))
+        {
             System.err.println("Client is connecting to " + clientSocket.getInetAddress() + ":" +clientSocket.getPort());
             sendSerializableRequest(clientSocket, gameState);
         } catch (IOException | ClassNotFoundException e) {

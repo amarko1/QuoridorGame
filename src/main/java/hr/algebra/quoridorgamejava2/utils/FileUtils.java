@@ -1,14 +1,18 @@
 package hr.algebra.quoridorgamejava2.utils;
 
+import hr.algebra.quoridorgamejava2.HelloApplication;
+import hr.algebra.quoridorgamejava2.controller.HelloController;
 import hr.algebra.quoridorgamejava2.model.GameState;
 
 import java.io.*;
 
 public class FileUtils {
 
-    public static final String filePath = "gameState.ser";
+    public static final String filePath = "gameState.dat";
 
     public static void saveGame(GameState gameState) {
+
+        HelloController.getInstance().updateUI(gameState);
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(gameState);

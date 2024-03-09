@@ -3,8 +3,10 @@ package hr.algebra.quoridorgamejava2.utils;
 import hr.algebra.quoridorgamejava2.model.CellState;
 import hr.algebra.quoridorgamejava2.model.GameState;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
 public class GameUtils {
@@ -33,6 +35,17 @@ public class GameUtils {
     public static void disableBoard(GridPane gameGrid) {
         for (Node node : gameGrid.getChildren()) {
             node.setDisable(true);
+        }
+    }
+
+    public static void enableBoard(GridPane gameGrid) {
+        for (Node node : gameGrid.getChildren()) {
+            if (node instanceof Button) {
+                node.setDisable(false);
+            }
+            else if(node instanceof Pane){
+                node.setDisable(false);
+            }
         }
     }
 

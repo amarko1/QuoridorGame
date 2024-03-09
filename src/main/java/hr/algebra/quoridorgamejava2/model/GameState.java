@@ -1,6 +1,9 @@
 package hr.algebra.quoridorgamejava2.model;
 
+import hr.algebra.quoridorgamejava2.HelloApplication;
+import hr.algebra.quoridorgamejava2.controller.HelloController;
 import hr.algebra.quoridorgamejava2.utils.DialogUtils;
+import hr.algebra.quoridorgamejava2.utils.GameUtils;
 
 import java.io.Serializable;
 
@@ -11,6 +14,7 @@ public class GameState implements Serializable {
     private int player1WallsLeft;
     private int player2WallsLeft;
     private CellState[][] gameBoard;
+    private String lastMove;
 
     public GameState() {
         this.currPlayer = "Player1";
@@ -71,6 +75,14 @@ public class GameState implements Serializable {
         currPlayer = currPlayer.equals("Player1") ? "Player2" : "Player1";
     }
 
+    public String getLastMove() {
+        return lastMove;
+    }
+
+    public void setLastMove(String lastMove) {
+        this.lastMove = lastMove;
+    }
+
     public void movePlayer(int newRow, int newCol) {
         // Find the current player's position
         for (int i = 0; i < NUM_OF_ROWS; i++) {
@@ -84,6 +96,7 @@ public class GameState implements Serializable {
         }
         // Set the new position based on the current player
         gameBoard[newRow][newCol] = currPlayer.equals("Player1") ? CellState.PLAYER1 : CellState.PLAYER2;
+        lastMove = (currPlayer) + "\n" + "(" + (newRow + 1) + ", " + (newCol + 1) + ")";
     }
 
     public void placeWall(int row, int col, String orientation) {
@@ -110,7 +123,7 @@ public class GameState implements Serializable {
         } else if (this.currPlayer.equals("Player2")) {
             this.player2WallsLeft--;
         }
+        lastMove = (currPlayer) + "\n" + "Wall placed " +  "(" + (row + 1) + ", " + (col + 1) + ")";
     }
-
 
 }

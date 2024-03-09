@@ -1,11 +1,16 @@
 package hr.algebra.quoridorgamejava2.controller;
 
+import hr.algebra.quoridorgamejava2.HelloApplication;
 import hr.algebra.quoridorgamejava2.model.CellState;
+import hr.algebra.quoridorgamejava2.model.GameMove;
 import hr.algebra.quoridorgamejava2.model.GameState;
-import hr.algebra.quoridorgamejava2.utils.DialogUtils;
-import hr.algebra.quoridorgamejava2.utils.DocumentationUtils;
-import hr.algebra.quoridorgamejava2.utils.FileUtils;
-import hr.algebra.quoridorgamejava2.utils.GameUtils;
+import hr.algebra.quoridorgamejava2.model.RoleName;
+import hr.algebra.quoridorgamejava2.thread.GetLastGameMoveThread;
+import hr.algebra.quoridorgamejava2.thread.SaveNewGameMoveThread;
+import hr.algebra.quoridorgamejava2.utils.*;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -14,11 +19,28 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
+import javafx.util.Duration;
 
 import java.io.File;
+import java.rmi.RemoteException;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static java.lang.System.getLogger;
 
 public class HelloController {
+    private static HelloController instance;
+
+    public HelloController() {
+        instance = this;
+    }
+
+    public static synchronized HelloController getInstance() {
+        if (instance == null) {
+            instance = new HelloController();
+        }
+        return instance;
+    }
 
     private static final Integer NUM_OF_ROWS = 17;
     private static final Integer NUM_OF_COLS = 17;
@@ -38,13 +60,21 @@ public class HelloController {
     @FXML
     private BorderPane borderPane;
 
-    ImageView Player1;
-    ImageView Player2;
+    @FXML
+    private TextField chatMessageTextField;
+
+    @FXML
+    private TextArea chatTextArea;
+
+    @FXML
+    private TextArea lastGameMoveTextArea;
+
+    private ImageView Player1;
+    private ImageView Player2;
 
     private GameState gameState;
 
-
-    private void loadGame()
+    public void loadGame()
     {
         GameState loadedGameState = FileUtils.loadGame();
         // Check if is not null
@@ -53,13 +83,15 @@ public class HelloController {
             this.gameState = loadedGameState;
 
             // Update the UI to reflect the loaded game state
-            updateUI();
+            updateUI(gameState);
 
             GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
         } else {
             DialogUtils.showErrorDialog("Error", "Load", "Cannot load saved game");
         }
     }
+
+
 
     private Node getNodeFromGridPane(int row, int col) {
         // retrieves the node at the specified row and column
@@ -156,21 +188,28 @@ public class HelloController {
         }
     }
 
-    private void updateUI() {
+    public void setAndUpdateGameState(GameState newState) {
+        this.gameState = newState;
+
+        updateUI(newState);
+    }
+
+    public void updateUI(GameState gameState) {
         for (int i = 0; i < NUM_OF_ROWS; i++) {
             for (int j = 0; j < NUM_OF_COLS; j++) {
                 Node node = getNodeFromGridPane(i, j); // A method to find the corresponding UI element
                 if (node instanceof Button) {
                     // Update player positions
                     Button button = (Button) node;
-                    CellState state = gameState.getGameBoard()[i][j];
+                    /*CellState state = gameState.getGameBoard()[i][j];
                     if (state == CellState.PLAYER1) {
                         button.setGraphic(Player1);
                     } else if (state == CellState.PLAYER2) {
                         button.setGraphic(Player2);
                     } else {
                         button.setGraphic(null); // Clear the graphic for EMPTY or WALL
-                    }
+                    }*/
+                    updateButtonGraphic(button, i, j);
                 }
                 else if (node instanceof Pane) {
                     // Visually represent walls
@@ -185,7 +224,14 @@ public class HelloController {
                 }
             }
         }
+        GameUtils.enableBoard(gameGrid);
         GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
+        GameUtils.checkWinner(gameState.getGameBoard(), NUM_OF_ROWS, gameGrid);
+
+        GameMove gameMove = new GameMove(gameState.getLastMove(), LocalDateTime.now());
+        SaveNewGameMoveThread saveNewGameMoveThread = new SaveNewGameMoveThread(gameMove);
+        Thread starterThread1 = new Thread(saveNewGameMoveThread);
+        starterThread1.start();
     }
 
     private String determineOrientation(int i, int j) {
@@ -202,10 +248,9 @@ public class HelloController {
 
     public void placeWall(int row, int col, String orientation) {
         gameState.placeWall(row, col, orientation);
-
-        updateUI();
-
         gameState.toggleCurrentPlayer();
+
+        updateUI(gameState);
 
         GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
     }
@@ -238,6 +283,17 @@ public class HelloController {
         DocumentationUtils.generateHtmlDocumentationFile();
     }
 
+    public static void sendGameState(GameState gameState, GridPane gameGrid) {
+        if (HelloApplication.loggedInRoleName == RoleName.CLIENT) {
+            NetworkingUtils.sendGameStateToServer(gameState);
+            GameUtils.disableBoard(gameGrid);
+        } else {
+            NetworkingUtils.sendGameStateToClient(gameState);
+            GameUtils.disableBoard(gameGrid);
+        }
+    }
+
+
     public void initialize() {
         gameState = new GameState(); // Initializes game state with default settings
 
@@ -255,6 +311,33 @@ public class HelloController {
 
         borderPane.setTop(menu);
 
+        final Timeline timeline = new Timeline(
+                new KeyFrame(
+                        Duration.millis(1000),
+                        event -> {
+                            List<String> chatMessages = null;
+                            try {
+                                chatMessages = HelloApplication.chatRemoteService.getAllChatMessages();
+                            } catch (RemoteException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            chatTextArea.clear();
+
+                            for (String message : chatMessages) {
+                                chatTextArea.appendText(message + "\n");
+                            }
+                        }
+                )
+        );
+        timeline.setCycleCount(Animation.INDEFINITE);
+        timeline.play();
+
+        GetLastGameMoveThread getLastGameMoveThread = new GetLastGameMoveThread(lastGameMoveTextArea);
+        Thread starterThread = new Thread(getLastGameMoveThread);
+        starterThread.start();
+
+
         for (int i = 0; i< NUM_OF_ROWS ; i++){
             for (int j = 0; j< NUM_OF_COLS; j++ ){
                 if (i % 2 == 0 && j % 2 == 0){
@@ -269,13 +352,13 @@ public class HelloController {
                         if (isAbleToMove(finalI, finalJ)) {
                             // Update the gameState with the new player position
                             gameState.movePlayer(finalI, finalJ);
-                            // Update the UI to reflect the new game state
-                            updateUI();
-                            // Toggle the current player in gameState
                             gameState.toggleCurrentPlayer();
-                            GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
+                            // Update the UI to reflect the new game state
+                            updateUI(gameState);
+
+                            sendGameState(gameState, gameGrid);
                         }
-                        GameUtils.checkWinner(gameState.getGameBoard(), NUM_OF_ROWS, gameGrid);
+                        //send player(game) state to server
                     });
                     gameGrid.add(btn, j, i);
                     // initial graphic for button on the gameState
@@ -287,18 +370,40 @@ public class HelloController {
                     pane.setStyle("-fx-background-color: white; -fx-border-color: white;");
                     int finalI = i;
                     int finalJ = j;
-
                     pane.setOnMouseClicked(e -> {
                         String orientation = determineOrientation(finalJ, finalI);
                         if (checkValidity(finalJ, finalI, orientation)) {
                             placeWall(finalJ, finalI, orientation);
+                            sendGameState(gameState, gameGrid);
+
                         } else {
                             System.out.println("Invalid wall placement.");
                         }
                     });
                 }
-
+                if (HelloApplication.loggedInRoleName == RoleName.SERVER) {
+                    GameUtils.disableBoard(gameGrid);
+                }
             }
+        }
+    }
+    public void sendChatMessage(){
+        String chatMessage = chatMessageTextField.getText();
+        try {
+            HelloApplication.chatRemoteService.sendChatMessage(HelloApplication.loggedInRoleName + ": " + chatMessage);
+
+            List<String> chatMessages =
+                    HelloApplication.chatRemoteService.getAllChatMessages();
+
+            chatTextArea.clear();
+            chatMessageTextField.clear();
+
+            for (String message : chatMessages) {
+                chatTextArea.appendText(message + "\n");
+            }
+
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
     }
 }
