@@ -3,6 +3,7 @@ module hr.algebra.quoridorgamejava2 {
     requires javafx.fxml;
     requires java.rmi;
     requires java.naming;
+    requires java.xml;
 
 
     exports hr.algebra.quoridorgamejava2.chat to java.rmi;

@@ -11,6 +11,9 @@ import hr.algebra.quoridorgamejava2.utils.*;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -24,7 +27,11 @@ import javafx.util.Duration;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.System.getLogger;
 
@@ -68,30 +75,56 @@ public class HelloController {
 
     @FXML
     private TextArea lastGameMoveTextArea;
-
     private ImageView Player1;
     private ImageView Player2;
-
     private GameState gameState;
 
     public void loadGame()
     {
         GameState loadedGameState = FileUtils.loadGame();
-        // Check if is not null
         if (loadedGameState != null) {
-            // Update the controller's current game state with the loaded state
             this.gameState = loadedGameState;
 
-            // Update the UI to reflect the loaded game state
             updateUI(gameState);
 
             GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
         } else {
-            DialogUtils.showErrorDialog("Error", "Load", "Cannot load saved game");
+            DialogUtils.showErrorDialog("Error", "Load error", "Cannot load saved game");
         }
     }
+    public void saveGame(){
+        FileUtils.saveGame(gameState);
+    }
+    public void generateHtmlDocumentation() {
+        DocumentationUtils.generateHtmlDocumentationFile();
+    }
 
+    public void replayGame() {
+        Set<GameMove> gameMoves = XmlUtils.readAllGameMoves();
+        final AtomicInteger counter = new AtomicInteger(0);
 
+        Timeline clock = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            if (counter.get() < gameMoves.size()) {
+                GameMove gameMove = (GameMove) gameMoves.toArray()[counter.getAndIncrement()];
+                String[] parts = gameMove.getPosition().split(",");
+                int row = Integer.parseInt(parts[0].trim());
+                int col = Integer.parseInt(parts[1].trim());
+
+                Node node = getNodeFromGridPane(row, col);
+                if (node instanceof Button) {
+                    Button button = (Button) node;
+                    ImageView playerGraphic = gameMove.getPlayer().equals("Player1") ? Player1 : Player2;
+                    button.setGraphic(playerGraphic);
+
+                } else if (node instanceof Pane) {
+                    Pane pane = (Pane) node;
+                    pane.setStyle("-fx-background-color: white; -fx-border-color: white;");
+                }
+            }
+        }));
+        clock.setCycleCount(Timeline.INDEFINITE);
+        clock.play();
+    }
 
     private Node getNodeFromGridPane(int row, int col) {
         // retrieves the node at the specified row and column
@@ -184,7 +217,7 @@ public class HelloController {
         } else if (state == CellState.PLAYER2) {
             btn.setGraphic(Player2);
         } else {
-            btn.setGraphic(null); // No graphic for empty cells or walls
+            btn.setGraphic(null);
         }
     }
 
@@ -201,14 +234,6 @@ public class HelloController {
                 if (node instanceof Button) {
                     // Update player positions
                     Button button = (Button) node;
-                    /*CellState state = gameState.getGameBoard()[i][j];
-                    if (state == CellState.PLAYER1) {
-                        button.setGraphic(Player1);
-                    } else if (state == CellState.PLAYER2) {
-                        button.setGraphic(Player2);
-                    } else {
-                        button.setGraphic(null); // Clear the graphic for EMPTY or WALL
-                    }*/
                     updateButtonGraphic(button, i, j);
                 }
                 else if (node instanceof Pane) {
@@ -228,22 +253,15 @@ public class HelloController {
         GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
         GameUtils.checkWinner(gameState.getGameBoard(), NUM_OF_ROWS, gameGrid);
 
-        GameMove gameMove = new GameMove(gameState.getLastMove(), LocalDateTime.now());
-        SaveNewGameMoveThread saveNewGameMoveThread = new SaveNewGameMoveThread(gameMove);
-        Thread starterThread1 = new Thread(saveNewGameMoveThread);
-        starterThread1.start();
-    }
+        GameMove gameMove = new GameMove(gameState.getLastPlayer(), gameState.getLastMove(), LocalDateTime.now());
 
-    private String determineOrientation(int i, int j) {
-        // Assuming the even indices for rows and columns represent buttons (players) and odd ones represent gaps for walls
-        if (i % 2 == 0 && j % 2 != 0) {
-            // This condition might be interpreted as a vertical wall placement
-            return "col";
-        } else if (i % 2 != 0 && j % 2 == 0) {
-            // This condition might be interpreted as a horizontal wall placement
-            return "row";
-        }
-        return null; // Error case or default case
+        XmlUtils.saveGameMove(gameMove);
+
+        Set<GameMove> gameMoveList = XmlUtils.readAllGameMoves();
+
+        SaveNewGameMoveThread saveNewGameMoveThread = new SaveNewGameMoveThread(gameMove);
+        Thread starterThread = new Thread(saveNewGameMoveThread);
+        starterThread.start();
     }
 
     public void placeWall(int row, int col, String orientation) {
@@ -255,34 +273,6 @@ public class HelloController {
         GameUtils.updatePlayerLabel(gameState, playerLabel, player1Walls, player2Walls);
     }
 
-    private MenuBar loadMenuBar() {
-        MenuBar menuBar = new MenuBar();
-
-        Menu editMenu = new Menu("Game Options");
-        MenuItem loadMenuItem = new MenuItem("Load Game");
-        loadMenuItem.setOnAction(e -> loadGame());
-
-        MenuItem newMenuItem = new MenuItem("New Game");
-        newMenuItem.setOnAction(e -> initialize());
-
-        MenuItem saveMenuItem = new MenuItem("Save Game");
-        saveMenuItem.setOnAction(e -> FileUtils.saveGame(gameState));
-        editMenu.getItems().addAll(newMenuItem, saveMenuItem, loadMenuItem);
-
-        Menu documentationMenu = new Menu("Documentation");
-        MenuItem createDocumentation = new MenuItem("Create");
-        createDocumentation.setOnAction(e -> generateHtmlDocumentation());
-        documentationMenu.getItems().add(createDocumentation);
-
-        menuBar.getMenus().addAll(editMenu, documentationMenu);
-
-        return menuBar;
-    }
-
-    public void generateHtmlDocumentation() {
-        DocumentationUtils.generateHtmlDocumentationFile();
-    }
-
     public static void sendGameState(GameState gameState, GridPane gameGrid) {
         if (HelloApplication.loggedInRoleName == RoleName.CLIENT) {
             NetworkingUtils.sendGameStateToServer(gameState);
@@ -292,7 +282,6 @@ public class HelloController {
             GameUtils.disableBoard(gameGrid);
         }
     }
-
 
     public void initialize() {
         gameState = new GameState(); // Initializes game state with default settings
@@ -307,39 +296,14 @@ public class HelloController {
         Player1 = new ImageView(new Image(f1.toURI().toString()));
         Player2 = new ImageView(new Image(f2.toURI().toString()));
 
-        MenuBar menu = loadMenuBar();
-
-        borderPane.setTop(menu);
-
         if (HelloApplication.loggedInRoleName != RoleName.SINGLE_PLAYER) {
 
-            final Timeline timeline = new Timeline(
-                    new KeyFrame(
-                            Duration.millis(1000),
-                            event -> {
-                                List<String> chatMessages = null;
-                                try {
-                                    chatMessages = HelloApplication.chatRemoteService.getAllChatMessages();
-                                } catch (RemoteException e) {
-                                    throw new RuntimeException(e);
-                                }
-
-                                chatTextArea.clear();
-
-                                for (String message : chatMessages) {
-                                    chatTextArea.appendText(message + "\n");
-                                }
-                            }
-                    )
-            );
-            timeline.setCycleCount(Animation.INDEFINITE);
-            timeline.play();
+            ThreadsUtils.startChatTimeLine(chatTextArea);
         }
 
         GetLastGameMoveThread getLastGameMoveThread = new GetLastGameMoveThread(lastGameMoveTextArea);
         Thread starterThread = new Thread(getLastGameMoveThread);
         starterThread.start();
-
 
         for (int i = 0; i< NUM_OF_ROWS ; i++){
             for (int j = 0; j< NUM_OF_COLS; j++ ){
@@ -351,20 +315,19 @@ public class HelloController {
                     int finalJ = j;
                     btn.setWrapText(true);
                     btn.setOnMouseClicked(e -> {
-                        // Check if the move is valid based on the gameState
                         if (isAbleToMove(finalI, finalJ)) {
                             // Update the gameState with the new player position
                             gameState.movePlayer(finalI, finalJ);
+
                             gameState.toggleCurrentPlayer();
-                            // Update the UI to reflect the new game state
+
                             updateUI(gameState);
 
                             sendGameState(gameState, gameGrid);
                         }
-                        //send player(game) state to server
                     });
                     gameGrid.add(btn, j, i);
-                    // initial graphic for button on the gameState
+                    // initial graphic for button
                     updateButtonGraphic(btn, i, j);
                 }
                 else {
@@ -374,11 +337,10 @@ public class HelloController {
                     int finalI = i;
                     int finalJ = j;
                     pane.setOnMouseClicked(e -> {
-                        String orientation = determineOrientation(finalJ, finalI);
+                        String orientation = gameState.determineOrientation(finalJ, finalI);
                         if (checkValidity(finalJ, finalI, orientation)) {
                             placeWall(finalJ, finalI, orientation);
                             sendGameState(gameState, gameGrid);
-
                         } else {
                             System.out.println("Invalid wall placement.");
                         }
@@ -392,21 +354,7 @@ public class HelloController {
     }
     public void sendChatMessage(){
         String chatMessage = chatMessageTextField.getText();
-        try {
-            HelloApplication.chatRemoteService.sendChatMessage(HelloApplication.loggedInRoleName + ": " + chatMessage);
-
-            List<String> chatMessages =
-                    HelloApplication.chatRemoteService.getAllChatMessages();
-
-            chatTextArea.clear();
-            chatMessageTextField.clear();
-
-            for (String message : chatMessages) {
-                chatTextArea.appendText(message + "\n");
-            }
-
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
+        chatMessageTextField.clear();
+        ChatUtils.sendChatMessage(chatMessage, chatTextArea);
     }
 }

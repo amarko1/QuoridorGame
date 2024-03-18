@@ -1,10 +1,6 @@
 package hr.algebra.quoridorgamejava2.model;
 
-import hr.algebra.quoridorgamejava2.HelloApplication;
-import hr.algebra.quoridorgamejava2.controller.HelloController;
 import hr.algebra.quoridorgamejava2.utils.DialogUtils;
-import hr.algebra.quoridorgamejava2.utils.GameUtils;
-
 import java.io.Serializable;
 
 public class GameState implements Serializable {
@@ -15,6 +11,7 @@ public class GameState implements Serializable {
     private int player2WallsLeft;
     private CellState[][] gameBoard;
     private String lastMove;
+    private String lastPlayer;
 
     public GameState() {
         this.currPlayer = "Player1";
@@ -83,47 +80,68 @@ public class GameState implements Serializable {
         this.lastMove = lastMove;
     }
 
+    public String getLastPlayer() {
+        return lastPlayer;
+    }
+
+    public void setLastPlayer(String lastPlayer) {
+        this.lastPlayer = lastPlayer;
+    }
+
     public void movePlayer(int newRow, int newCol) {
-        // Find the current player's position
         for (int i = 0; i < NUM_OF_ROWS; i++) {
             for (int j = 0; j < NUM_OF_ROWS; j++) {
                 if ((currPlayer.equals("Player1") && gameBoard[i][j] == CellState.PLAYER1) ||
                         (currPlayer.equals("Player2") && gameBoard[i][j] == CellState.PLAYER2)) {
-                    gameBoard[i][j] = CellState.EMPTY; // Mark old position as EMPTY
-                    break; // Assuming one player instance on the board
+                    gameBoard[i][j] = CellState.EMPTY; // old position empty
+                    break;
                 }
             }
         }
         // Set the new position based on the current player
         gameBoard[newRow][newCol] = currPlayer.equals("Player1") ? CellState.PLAYER1 : CellState.PLAYER2;
-        lastMove = (currPlayer) + "\n" + "(" + (newRow + 1) + ", " + (newCol + 1) + ")";
+        lastMove = (newRow) + "," + (newCol);
+        lastPlayer = currPlayer;
+    }
+
+
+    public String determineOrientation(int i, int j) {
+        if (i % 2 == 0 && j % 2 != 0) {
+            // This condition might be interpreted as a vertical wall placement
+            return "col";
+        } else if (i % 2 != 0 && j % 2 == 0) {
+            // This condition might be interpreted as a horizontal wall placement
+            return "row";
+        }
+        return null;
     }
 
     public void placeWall(int row, int col, String orientation) {
         if (this.gameBoard == null) {
             System.out.println("GameState gameBoard is null!");
             DialogUtils.showErrorDialog("Error", "Game state error", "GameState gameBoard is null!");
-            return; // exit if gameBoard hasn't been initialized
+            return; // exit
         }
-        // Logic to place a wall in the gameBoard
+
         if ("row".equals(orientation)) {
             // Place a horizontal wall
             for (int offset = 0; offset < 3; offset++) {
-                gameBoard[row][col + offset] = CellState.WALL; // Adjust for correct row handling
+                gameBoard[row][col + offset] = CellState.WALL;
             }
         } else if ("col".equals(orientation)) {
             // Place a vertical wall
             for (int offset = 0; offset < 3; offset++) {
-                gameBoard[row + offset][col] = CellState.WALL; // Adjust for correct column handling
+                gameBoard[row + offset][col] = CellState.WALL;
             }
         }
-        // Decrement the appropriate player's wall count
+
+
         if (this.currPlayer.equals("Player1")) {
             this.player1WallsLeft--;
         } else if (this.currPlayer.equals("Player2")) {
             this.player2WallsLeft--;
         }
-        lastMove = (currPlayer) + "\n" + "Wall placed " +  "(" + (row + 1) + ", " + (col + 1) + ")";
+        lastMove = (row) + "," + (col);
     }
 
 }

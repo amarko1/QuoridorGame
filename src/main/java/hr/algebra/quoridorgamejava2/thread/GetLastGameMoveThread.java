@@ -2,17 +2,17 @@ package hr.algebra.quoridorgamejava2.thread;
 
 import hr.algebra.quoridorgamejava2.model.GameMove;
 import javafx.application.Platform;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class GetLastGameMoveThread extends GameMoveThread implements Runnable {
 
-    private TextArea lastGameMoveLabel;
+    private TextArea lastGameMoveArea;
 
-    public GetLastGameMoveThread(TextArea lastGameMoveLabel) {
-        this.lastGameMoveLabel = lastGameMoveLabel;
+    public GetLastGameMoveThread(TextArea lastGameMoveArea) {
+        this.lastGameMoveArea = lastGameMoveArea;
     }
 
     @Override
@@ -23,8 +23,14 @@ public class GetLastGameMoveThread extends GameMoveThread implements Runnable {
 
             if(lastGameMoveOptional.isPresent()) {
                 Platform.runLater(() -> {
-                    lastGameMoveLabel.setText(lastGameMoveOptional.get().getPosition() + " \n"
-                            + lastGameMoveOptional.get().getLocalDateTime());
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy. HH:mm:ss");
+                    String formattedDateTime = lastGameMoveOptional.get().getLocalDateTime().format(formatter);
+
+                    String textToSet = lastGameMoveOptional.get().getPlayer() + "\n"
+                            + lastGameMoveOptional.get().getPosition() + " \n"
+                            + formattedDateTime;
+
+                    lastGameMoveArea.setText(textToSet);
                 });
             }
 

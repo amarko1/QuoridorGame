@@ -23,8 +23,8 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class HelloApplication extends Application {
 
+    private static Scene mainScene;
     public static RoleName loggedInRoleName;
-
     public static ChatRemoteService chatRemoteService;
 
     @Override
@@ -34,6 +34,7 @@ public class HelloApplication extends Application {
         stage.setTitle(loggedInRoleName.name());
         stage.setScene(scene);
         stage.show();
+        mainScene = scene;
     }
 
     public static void main(String[] args) {
@@ -126,5 +127,9 @@ public class HelloApplication extends Application {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public static Scene getMainScene(){
+        return mainScene;
     }
 }

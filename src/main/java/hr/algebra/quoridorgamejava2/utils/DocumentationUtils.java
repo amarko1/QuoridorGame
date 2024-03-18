@@ -60,7 +60,7 @@ public class DocumentationUtils {
                             .append("<br>");
                 }
 
-                // Documenting constructors similar to methods
+                // Documenting constructors
                 htmlBuilder.append("<h3>Constructors</h3>");
                 Constructor<?>[] constructors = deserializedClass.getDeclaredConstructors();
                 for(Constructor<?> constructor : constructors) {

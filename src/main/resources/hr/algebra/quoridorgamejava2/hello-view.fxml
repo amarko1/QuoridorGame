@@ -2,6 +2,9 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
@@ -13,7 +16,7 @@
 
 <BorderPane fx:id="borderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="595.0" prefWidth="799.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hr.algebra.quoridorgamejava2.controller.HelloController">
    <right>
-      <Pane prefHeight="595.0" prefWidth="146.0" style="-fx-background-color: lightgray;" BorderPane.alignment="CENTER">
+      <Pane prefHeight="570.0" prefWidth="134.0" style="-fx-background-color: lightgray;" BorderPane.alignment="CENTER">
          <children>
             <Label layoutX="19.0" layoutY="14.0" text="Current Player">
                <font>
@@ -46,7 +49,7 @@
                </font>
             </Label>
             <Label fx:id="lastGameMoveLabel" layoutX="8.0" layoutY="161.0" prefHeight="20.0" prefWidth="103.0" text="Last Game move: " />
-            <TextArea fx:id="lastGameMoveTextArea" editable="false" layoutX="8.0" layoutY="181.0" prefHeight="88.0" prefWidth="131.0" wrapText="true" />
+            <TextArea fx:id="lastGameMoveTextArea" editable="false" layoutX="8.0" layoutY="181.0" prefHeight="78.0" prefWidth="124.0" wrapText="true" />
          </children>
       </Pane>
    </right>
@@ -95,10 +98,29 @@
    <left>
       <Pane prefHeight="600.0" prefWidth="167.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField fx:id="chatMessageTextField" layoutX="9.0" layoutY="512.0" />
-            <Button layoutX="37.0" layoutY="545.0" mnemonicParsing="false" onAction="#sendChatMessage" text="Send message" />
-            <TextArea fx:id="chatTextArea" editable="false" layoutX="6.0" layoutY="5.0" prefHeight="498.0" prefWidth="155.0" style="-fx-border-color: black;" />
+            <TextField fx:id="chatMessageTextField" layoutX="9.0" layoutY="498.0" />
+            <Button layoutX="37.0" layoutY="531.0" mnemonicParsing="false" onAction="#sendChatMessage" text="Send message" />
+            <TextArea fx:id="chatTextArea" editable="false" layoutX="6.0" layoutY="5.0" prefHeight="485.0" prefWidth="155.0" style="-fx-border-color: black;" />
          </children>
       </Pane>
    </left>
+   <top>
+      <MenuBar prefHeight="24.0" prefWidth="799.0" BorderPane.alignment="CENTER">
+        <menus>
+          <Menu mnemonicParsing="false" text="Game options">
+            <items>
+              <MenuItem mnemonicParsing="false" onAction="#initialize" text="New game" />
+                  <MenuItem mnemonicParsing="false" onAction="#saveGame" text="Save game" />
+                  <MenuItem mnemonicParsing="false" onAction="#loadGame" text="Load game" />
+                  <MenuItem mnemonicParsing="false" onAction="#replayGame" text="Replay" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Documentation">
+            <items>
+              <MenuItem mnemonicParsing="false" onAction="#generateHtmlDocumentation" text="Create" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+   </top>
 </BorderPane>

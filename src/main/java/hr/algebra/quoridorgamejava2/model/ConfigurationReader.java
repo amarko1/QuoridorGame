@@ -14,7 +14,7 @@ public class ConfigurationReader {
     private static Properties props = new Properties();
 
     static {
-        Hashtable<String, String> environment= new Hashtable<>();
+        Hashtable<String, String> environment = new Hashtable<>();
         environment.put(Context.INITIAL_CONTEXT_FACTORY,"com.sun.jndi.fscontext.RefFSContextFactory");
         environment.put(Context.PROVIDER_URL,"file:D:/Quoridor-conf/conf");
 
